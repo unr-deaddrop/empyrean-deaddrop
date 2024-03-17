@@ -42,7 +42,7 @@ def main():
             print(f"Error in {module.__name__}: {e}")
 
     # Serialize result as result.json
-    with open("empyrean-result.json") as fp:
+    with open("empyrean-result.json", "wt+") as fp:
         json.dump(result, fp, indent=2)
 
 
