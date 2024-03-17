@@ -36,7 +36,7 @@ def main():
 
     for module in modules:
         try:
-            result[module.MODULE_NAME] = module()
+            result[module.MODULE_NAME] = module.run_module()
         except Exception as e:
             print(f'Error in {module.__name__}: {e}')
             

