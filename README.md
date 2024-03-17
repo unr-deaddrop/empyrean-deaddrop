@@ -1,7 +1,7 @@
 This is a fork of Empyrean that's used in Pygin. The following modifications have been made:
-- All components generate dictionary results that are eventually combined to form a DeadDropMessage.
+- All components generate dictionary results that are eventually combined to form a DeadDropMessage. No external calls (i.e. webhooks) are made.
 - The injection module has been removed.
-- Some "standalone" functionality, such as persistence, has been removed.
+- Some "standalone" functionality, such as persistence, has been removed (to delegate these to Pygin).
 
 Anti-debug and obfuscation have been preserved in an effort to prevent Windows Defender from randomly blowing up Pygin.
 

