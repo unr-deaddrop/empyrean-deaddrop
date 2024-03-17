@@ -39,6 +39,8 @@ class Download(BaseModel):
 
 
 class Browsers:
+    MODULE_NAME = "browsers"
+    
     @classmethod
     def run_module(cls) -> dict[str, Any]:
         return Chromium().return_result()
