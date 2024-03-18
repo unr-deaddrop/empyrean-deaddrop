@@ -3,7 +3,7 @@ This is a fork of Empyrean that's used in Pygin. The following modifications hav
 - The injection module has been removed.
 - Some "standalone" functionality, such as persistence, has been removed (to delegate these to Pygin).
 
-Anti-debug and obfuscation have been preserved in an effort to prevent Windows Defender from randomly blowing up Pygin.
+Anti-debug and obfuscation have been preserved in an effort to prevent Windows Defender from randomly blowing up Pygin (though this doesn't work anyways).
 
 The resulting .exe simply executes all available modules, which have been modified to return their results as a Python dictionary, then combines their results with the name of the module as the dictionary key. The result is JSON serialized to disk as empyrean-result.json, which can then be retrieved (and deleted) by Pygin.
 
